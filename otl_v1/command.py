@@ -2,20 +2,28 @@ import logging
 import signal
 import urllib.error
 from timeit import default_timer as timer
-from typing import Dict
+from typing import Dict, Callable
 
 from pp_exec_env.base_command import BaseCommand, Syntax, Rule, pd
+
 from . import api
+
+
+TOTAL_STAGES = 6
 
 
 def timeout_handler(signum, frame):
     raise TimeoutError("OTLv1 request timeout!")
 
 
-def make_request(username: str, password: str, login_cache_ttl: int, data: Dict, logger: logging.Logger) -> pd.DataFrame:
+def make_request(username: str, password: str, login_cache_ttl: int, data: Dict, logger: logging.Logger,
+                 log_progess: Callable) -> pd.DataFrame:
     logger.info("Authentication in progress")
+    stage = 0
+    log_progess("Authentication in progress", stage := stage + 1, TOTAL_STAGES)
     cookie = api.login(username, password, api.get_ttl_hash(login_cache_ttl))  # 24 hours of login caching
 
+    log_progess("Creating an OTLv1 Job", stage := stage + 1, TOTAL_STAGES)
     try:
         logger.info("Creating an OTLv1 Job")
         api.make_job(data, username, cookie)
@@ -34,13 +42,16 @@ def make_request(username: str, password: str, login_cache_ttl: int, data: Dict,
             logging.error(f"Unknown HTTP Error: {e.__str__()}")
             raise e
 
+    log_progess("Waiting for results", stage := stage + 1, TOTAL_STAGES)
     logger.info("Waiting for results")
     cid = api.check_job(data, cookie)
 
+    log_progess("Fetching results info", stage := stage + 1, TOTAL_STAGES)
     logger.info("Fetching results info")
     results_paths = api.get_result(cid, cookie, api.get_ttl_hash(data["cache_ttl"]))  # An hour of results paths caching
 
     try:
+        log_progess("Preparing the DataFrame", stage := stage + 1, TOTAL_STAGES)
         logger.info("Preparing the DataFrame")
         df = api.get_dataframe(results_paths, cookie)
     except urllib.error.HTTPError as e:
@@ -91,7 +102,8 @@ class OTLV1Command(BaseCommand):
                           password,
                           self.config["caching"].getint("login_cache_ttl"),
                           request_data,
-                          self.logger)
+                          self.logger,
+                          self.log_progress)
         end_time = timer()
 
         signal.alarm(0)  # Cancel timer
