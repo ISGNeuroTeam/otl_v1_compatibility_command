@@ -12,9 +12,9 @@ def timeout_handler(signum, frame):
     raise TimeoutError("OTLv1 request timeout!")
 
 
-def make_request(username: str, password: str, data: Dict, logger: logging.Logger) -> pd.DataFrame:
+def make_request(username: str, password: str, login_cache_ttl: int, data: Dict, logger: logging.Logger) -> pd.DataFrame:
     logger.info("Authentication in progress")
-    cookie = api.login(username, password, api.get_ttl_hash(3600 * 24))  # 24 hours of login caching
+    cookie = api.login(username, password, api.get_ttl_hash(login_cache_ttl))  # 24 hours of login caching
 
     try:
         logger.info("Creating an OTLv1 Job")
@@ -26,7 +26,7 @@ def make_request(username: str, password: str, data: Dict, logger: logging.Logge
 
             api.login.cache_clear()
             logger.info("Authentication in progress")
-            cookie = api.login(username, password, api.get_ttl_hash(3600 * 24))
+            cookie = api.login(username, password, api.get_ttl_hash(login_cache_ttl))
 
             logger.info("Creating an OTLv1 Job")
             api.make_job(data, username, cookie)
@@ -87,7 +87,11 @@ class OTLV1Command(BaseCommand):
 
         start_time = timer()
         # if this is too long, TimeoutError will be raised
-        df = make_request(username, password, request_data, self.logger)
+        df = make_request(username,
+                          password,
+                          self.config["caching"].getint("login_cache_ttl"),
+                          request_data,
+                          self.logger)
         end_time = timer()
 
         signal.alarm(0)  # Cancel timer
