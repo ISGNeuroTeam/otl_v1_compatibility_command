@@ -1,3 +1,4 @@
+import binascii
 import json
 import os
 import random
@@ -8,9 +9,8 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial, lru_cache
 from typing import List, Dict, Tuple
 
-from pp_exec_env.base_command import pd
+import pandas as pd
 from pp_exec_env.schema import ddl_to_pd_schema
-
 
 BASE_ADDRESS = ""
 
@@ -18,6 +18,23 @@ BASE_ADDRESS = ""
 def get_ttl_hash(seconds=3600):
     """Return the same value withing `seconds` time period"""
     return round(time.time() / seconds)
+
+
+def encode_multipart_formdata(fields: Dict) -> Tuple[str, str]:
+    boundary = binascii.hexlify(os.urandom(16)).decode('ascii')
+
+    body = (
+        "".join("--%s\r\n"
+                "Content-Disposition: form-data; name=\"%s\"\r\n"
+                "\r\n"
+                "%s\r\n" % (boundary, field, value)
+                for field, value in fields.items()) +
+        "--%s--\r\n" % boundary
+    )
+
+    content_type = "multipart/form-data; boundary=%s" % boundary
+
+    return body, content_type
 
 
 @lru_cache(maxsize=3)
@@ -47,11 +64,12 @@ def make_job(request_data: Dict, username: str, cookie: str) -> Dict:
         "preview": "false"
     }
     data = {**request_data, **additional_data}  # Merge request_data and additional_data
-    data = urllib.parse.urlencode(data).encode('ascii')  # urlencode data
+    body, content_type = encode_multipart_formdata(data)
     url = f"{BASE_ADDRESS}/api/makejob"
 
-    request = urllib.request.Request(url, data)
+    request = urllib.request.Request(url, body.encode("utf-8"))
     request.add_header("Cookie", cookie)
+    request.add_header("Content-Type", content_type)
 
     with urllib.request.urlopen(request) as r:  # Make request
         result = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))

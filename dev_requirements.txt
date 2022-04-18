@@ -1,0 +1,5 @@
+pp_exec_env~=1.0.0
+otlang
+pandas
+--extra-index-url http://s.dev.isgneuro.com/repository/ot.platform/simple
+--trusted-host s.dev.isgneuro.com

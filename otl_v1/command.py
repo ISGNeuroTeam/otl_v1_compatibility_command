@@ -4,10 +4,11 @@ import urllib.error
 from timeit import default_timer as timer
 from typing import Dict, Callable
 
-from pp_exec_env.base_command import BaseCommand, Syntax, Rule, pd
+import pandas as pd
+from otlang.sdk.syntax import Keyword, Positional, OTLType
+from pp_exec_env.base_command import BaseCommand, Syntax
 
 from . import api
-
 
 TOTAL_STAGES = 6
 
@@ -72,11 +73,11 @@ def make_request(username: str, password: str, login_cache_ttl: int, data: Dict,
 
 
 class OTLV1Command(BaseCommand):
-    syntax = Syntax([Rule(name="code", required=True, input_types=["inline", "string"]),
-                     Rule(name="timeout", required=False, input_types=["integer"], type="kwarg"),
-                     Rule(name="tws", required=False, type="kwarg"),
-                     Rule(name="twf", required=False, type="kwarg"),
-                     Rule(name="cache_ttl", required=False, type="kwarg")],
+    syntax = Syntax([Positional("code", required=True, otl_type=OTLType.TEXT),
+                     Keyword("timeout", required=False, otl_type=OTLType.INTEGER),
+                     Keyword("tws", required=False, otl_type=OTLType.INTEGER),
+                     Keyword("twf", required=False, otl_type=OTLType.INTEGER),
+                     Keyword("cache_ttl", required=False, otl_type=OTLType.INTEGER)],
                     use_timewindow=False)
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
