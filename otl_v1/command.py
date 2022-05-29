@@ -75,10 +75,8 @@ def make_request(username: str, password: str, login_cache_ttl: int, data: Dict,
 class OTLV1Command(BaseCommand):
     syntax = Syntax([Positional("code", required=True, otl_type=OTLType.TEXT),
                      Keyword("timeout", required=False, otl_type=OTLType.INTEGER),
-                     Keyword("tws", required=False, otl_type=OTLType.INTEGER),
-                     Keyword("twf", required=False, otl_type=OTLType.INTEGER),
-                     Keyword("cache_ttl", required=False, otl_type=OTLType.INTEGER)],
-                    use_timewindow=False)
+                     Keyword("cache_ttl", required=False, otl_type=OTLType.INTEGER)])
+    use_timewindow = True
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         api.BASE_ADDRESS = self.config["spark"]["base_address"]
@@ -88,8 +86,8 @@ class OTLV1Command(BaseCommand):
 
         request_data = {
             "original_otl": self.get_arg("code").value,
-            "tws": self.get_arg("tws").value or 0,
-            "twf": self.get_arg("twf").value or 0,
+            "tws": self.get_arg("earliest").value or 0,
+            "twf": self.get_arg("latest").value or 0,
             "cache_ttl": self.get_arg("cache_ttl").value or self.config["caching"].getint("default_request_cache_ttl"),
             "timeout": timeout
         }
