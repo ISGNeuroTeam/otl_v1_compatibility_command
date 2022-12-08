@@ -141,9 +141,16 @@ def get_dataframe(paths: List[str], cookie: str) -> pd.DataFrame:
     ddl = ddl.decode(encoding)
 
     data = ''.join([s.decode(e) for s, e in results])
-
     schema, ddl_schema = ddl_to_pd_schema(ddl)
-    df = pd.read_json(data, orient="records", lines=True, dtype=schema, keep_default_dates=False)
+
+    if len(data):
+        df = pd.read_json(data, orient="records", lines=True, dtype=schema, keep_default_dates=False)
+    else:
+        df = pd.DataFrame({
+            key: pd.Series(dtype=value)
+            for key, value in schema.items()
+        })
+
     df.index.name = "Index"
     df.schema._initial_schema = ddl_schema
     return df
