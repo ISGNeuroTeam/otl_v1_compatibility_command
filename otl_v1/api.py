@@ -91,6 +91,8 @@ def check_job(request_data: Dict, cookie: str) -> int:
 
         if result["status"] == "failed":
             raise ValueError(result["error"])
+        elif result["status"] == "canceled":
+            raise Exception('Query was canceled')
         elif result["status"] == "success":
             cid = result["cid"]
             break
