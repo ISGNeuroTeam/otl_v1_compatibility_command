@@ -78,7 +78,7 @@ dev: venv
 clean: clean_build clean_pack clean_test clean_venv
 
 test:
-	docker build --progress=plain -t pp_cmd_otl_v1_compatibility_test:$(VERSION) . && docker run -v $$(pwd):/app -it pp_cmd_otl_v1_compatibility_test:$(VERSION) python -m unittest tests/test_otl_v1_compatibility.py
+	docker build --progress=plain -t pp_cmd_otl_v1_compatibility_test:$(VERSION) . && docker run -v $$(pwd):/app -it pp_cmd_otl_v1_compatibility_test:$(VERSION) python -m unittest tests/test_command.py
 
 clean_test:
 	@echo "Clean tests"
