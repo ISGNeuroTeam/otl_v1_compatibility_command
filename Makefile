@@ -10,7 +10,7 @@ all:
  pack - make output archive, file name format \"pp_cmd_otl_v1_vX.Y.Z_BRANCHNAME.tar.gz\"\n\
 "
 
-VERSION := "0.1.0"
+VERSION := "0.1.1"
 BRANCH := $(shell git name-rev $$(git rev-parse HEAD) | cut -d\  -f2 | sed -re 's/^(remotes\/)?origin\///' | tr '/' '_')
 
 CONDA = conda/miniconda/bin/conda
@@ -78,7 +78,7 @@ dev: venv
 clean: clean_build clean_pack clean_test clean_venv
 
 test:
-	@echo "Testing..."
+	docker build --progress=plain -t pp_cmd_otl_v1_compatibility_test:$(VERSION) . && docker run -v $$(pwd):/app -it pp_cmd_otl_v1_compatibility_test:$(VERSION) python -m unittest tests/test_otl_v1_compatibility.py
 
 clean_test:
 	@echo "Clean tests"
