@@ -13,7 +13,8 @@ class TestCommand(TestCase):
 
     def setUp(self):
         self.command = Command()
-        commands_dir = ''
+        commands_dir = os.path.join(prefix,
+                                    'lib/python3.9/site-packages/postprocessing_sdk/pp_cmd')
         self.command._create_command_executor(storage='', commands_dir=commands_dir)
         parent_dir = os.path.dirname(os.path.dirname(__file__))
         # add current command to self.command with _import_user_commands()
@@ -25,9 +26,9 @@ class TestCommand(TestCase):
 
     def test_otl_v1_compatibility_command(self):
         # enter sample dataframe
-        sample = pd.DataFrame([[1, 2, 3], [2, 3, 4]], columns=["a", "b", "c"])
+        sample = pd.DataFrame()
         # create otl query that should return the same dataframe as you have in sample
-        otl_query = '| {{command_name}} first_positional_argument'
+        otl_query = ''
         # calculate otl query with postprocessing
         result = self.run_otl(otl_query=otl_query)
         # check if sample and result are the same
